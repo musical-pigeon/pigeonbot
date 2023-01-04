@@ -150,7 +150,7 @@ async def on_message(message):
         return
 
     set_cmd_example = config.get('command_name__set') + ' danbooru_or_gelbooru_tag'
-    if message.content.lower().strip() == config.get('command_name__set'):
+    if message.content.lower().strip().startswith(config.get('command_name__set')):
         response = ''
         words = message.content.split(' ')
         if len(words) < 2:
