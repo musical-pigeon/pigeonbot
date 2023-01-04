@@ -1,0 +1,13 @@
+tag_file="waifus.txt"
+discord_token="WHEN WILL DISCORD'S API SUPPORT IPV6 SO I CAN SAVE MONEY ON HETZNER"
+
+command_name__set=".setwaifu"
+command_name__get="mywaifu"
+
+command_name__start="The time hath come."
+command_name__stop="fuck off"
+start_response="<:shamistonks:925779459527819275>"
+stop_response="<:playdead:970451149968777266>"
+
+imobot_user_id="432918114582265856"
+wait_for_imobot=false

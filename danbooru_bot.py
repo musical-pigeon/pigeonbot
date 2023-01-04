@@ -4,25 +4,7 @@
 # https://discord.com/api/oauth2/authorize?client_id=CLIENT_ID_GOES_HERE&permissions=68608&scope=bot
 # channel history is so that it can check for imobot (we never ended up using this feature)
 
-# sample config (place in cfg.toml before running bot, restart bot after making changes):
-#
-#tag_file="waifus.txt"
-#discord_token="fucking discord API can tounge my anus"
-#
-#command_name__set="!setwaifu"
-#command_name__get="mywaifu"
-#
-#command_name__start="The time hath come."
-#command_name__stop="fuck off"
-#start_response="<:shamistonks:925779459527819275>"
-#stop_response="<:playdead:970451149968777266>"
-#
-#imobot_user_id="432918114582265856"
-#wait_for_imobot=false
-
 import json
-import os
-import sys
 import time
 import urllib
 
@@ -156,7 +138,7 @@ async def on_message(message):
         if len(words) < 2:
             response = 'use ' + set_cmd_example
         else:
-            set_tag(message.author.id, message.content.partition(' ')[2])
+            set_tag(message.author.id, urllib.parse.quote(message.content.partition(' ')[2]))
             response = 'tag set'
         if not await is_imobot_active(message):
             await message.channel.send(response)
