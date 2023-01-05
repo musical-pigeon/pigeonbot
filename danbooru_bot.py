@@ -99,6 +99,24 @@ def try_gelbooru(tag, rating_tag):
             pass
         return (False, err)
 
+recent_results = {}
+
+def is_repost(user_id, image_url) -> bool:
+    global recent_results
+    if user_id not in recent_results:
+        recent_results[user_id] = [image_url]
+        return False
+
+    if image_url in recent_results[user_id]:
+        return True
+
+    recent_results[user_id].append(image_url)
+
+    while len(recent_results[user_id]) > 10:
+        del recent_results[user_id][0]
+
+    return False
+
 # awake, but at what cost
 awake = False
 
@@ -156,25 +174,32 @@ async def on_message(message):
             rating_tag = 'rating:general'
         elif message.content.lower().strip() == config.get('command_name__get') + 'xxx':
             rating_tag = 'rating:explicit'
-        (danbooru_worked, danbooru_img_or_err) = try_danbooru(tag, rating_tag)
-        img = None
-        if danbooru_worked:
-            img = danbooru_img_or_err
-        else:
-            print('danbooru: ' + danbooru_img_or_err)
-            (gelbooru_worked, gelbooru_img_or_err) = try_gelbooru(tag, rating_tag)
-            if gelbooru_worked:
-                img = gelbooru_img_or_err
+
+        counter = 0
+        while True:
+            (danbooru_worked, danbooru_img_or_err) = try_danbooru(tag, rating_tag)
+            img = None
+            if danbooru_worked:
+                img = danbooru_img_or_err
             else:
-                print('gelbooru: ' + gelbooru_img_or_err)
-        if img is not None:
-            if not await is_imobot_active(message):
-                e = discord.Embed()
-                e.set_image(url=img[0])
-                e.description=img[1]
-                await message.channel.send(embed=e)
-        else:
-            if not await is_imobot_active(message):
-                await message.channel.send('error. danbooru: ' + danbooru_img_or_err + ', gelbooru: ' + gelbooru_img_or_err)
+                print('danbooru: ' + danbooru_img_or_err)
+                (gelbooru_worked, gelbooru_img_or_err) = try_gelbooru(tag, rating_tag)
+                if gelbooru_worked:
+                    img = gelbooru_img_or_err
+                else:
+                    print('gelbooru: ' + gelbooru_img_or_err)
+            if img is not None:
+                if not await is_imobot_active(message):
+                    if counter > 3 or not is_repost(message.author.id, img[0]):
+                        e = discord.Embed()
+                        e.set_image(url=img[0])
+                        e.description=img[1]
+                        await message.channel.send(embed=e)
+                        break
+            else:
+                if not await is_imobot_active(message):
+                    await message.channel.send('error. danbooru: ' + danbooru_img_or_err + ', gelbooru: ' + gelbooru_img_or_err)
+                break
+            counter += 1
 
 client.run(config.get('discord_token'))
