@@ -26,6 +26,8 @@ assert 'stop_response' in config
 assert 'imobot_user_id' in config
 assert 'wait_for_imobot' in config
 
+assert 'repost_window' in config
+
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
@@ -112,7 +114,7 @@ def is_repost(user_id, image_url) -> bool:
 
     recent_results[user_id].append(image_url)
 
-    while len(recent_results[user_id]) > 10:
+    while len(recent_results[user_id]) > int(config.get('repost_window')):
         del recent_results[user_id][0]
 
     return False
