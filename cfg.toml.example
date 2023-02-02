@@ -3,6 +3,7 @@ discord_token="WHEN WILL DISCORD'S API SUPPORT IPV6 SO I CAN SAVE MONEY ON HETZN
 
 command_name__set=".setwaifu"
 command_name__get="mywaifu"
+command_name__mike="mikewaifu"
 
 command_name__start="The time hath come."
 command_name__stop="fuck off"

@@ -17,6 +17,7 @@ assert 'discord_token' in config
 
 assert 'command_name__set' in config
 assert 'command_name__get' in config
+assert 'command_name__mike' in config
 
 assert 'command_name__start' in config
 assert 'start_response' in config
@@ -135,6 +136,9 @@ async def on_message(message):
             config.get('command_name__get'),
             config.get('command_name__get') + 'x',
             config.get('command_name__get') + 'xxx', # :kongoulewd:
+            config.get('command_name__mike'),
+            config.get('command_name__mike') + 'x',
+            config.get('command_name__mike') + 'xxx',
             config.get('command_name__start'),
             config.get('command_name__stop'),
         ]))
@@ -151,8 +155,10 @@ async def on_message(message):
         await message.channel.send(config.get('stop_response'))
         return
 
+    sanitized_msg = message.content.lower().strip()
+
     set_cmd_example = config.get('command_name__set') + ' danbooru_or_gelbooru_tag'
-    if message.content.lower().strip().startswith(config.get('command_name__set')):
+    if sanitized_msg.startswith(config.get('command_name__set')):
         response = ''
         words = message.content.split(' ')
         if len(words) < 2:
@@ -163,13 +169,20 @@ async def on_message(message):
         if not await is_imobot_active(message):
             await message.channel.send(response)
 
-    if message.content.lower().strip() == config.get('command_name__get') or\
-            message.content.lower().strip() == config.get('command_name__get') + 'x' or\
-            message.content.lower().strip() == config.get('command_name__get') + 'xxx':
-        tag = get_tag(message.author.id)
-        if tag is None:
-            if not await is_imobot_active(message):
-                await message.channel.send('tag not set. use ' + set_cmd_example)
+    if sanitized_msg == config.get('command_name__get') or\
+            sanitized_msg == config.get('command_name__get') + 'x' or\
+            sanitized_msg == config.get('command_name__get') + 'xxx' or\
+            sanitized_msg == config.get('command_name__mike') or\
+            sanitized_msg == config.get('command_name__mike') + 'x' or\
+            sanitized_msg == config.get('command_name__mike') + 'xxx':
+        if sanitized_msg.startswith(config.get('command_name__get')):
+            tag = get_tag(message.author.id)
+            if tag is None:
+                if not await is_imobot_active(message):
+                    await message.channel.send('tag not set. use ' + set_cmd_example)
+        else:
+            assert sanitized_msg.startswith(config.get('command_name__mike'))
+            tag = 'hatsune_miku'
 
         rating_tag = ''
         if message.content.lower().strip() == config.get('command_name__get'):
