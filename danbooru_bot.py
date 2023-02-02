@@ -185,10 +185,12 @@ async def on_message(message):
             tag = 'hatsune_miku'
 
         rating_tag = ''
-        if message.content.lower().strip() == config.get('command_name__get'):
-            rating_tag = 'rating:general'
-        elif message.content.lower().strip() == config.get('command_name__get') + 'xxx':
+        if sanitized_msg.endswith('xxx'):
             rating_tag = 'rating:explicit'
+        elif sanitized_msg.endswith('x'):
+            rating_tag = ''
+        else:
+            rating_tag = 'rating:general'
 
         counter = 0
         while True:
