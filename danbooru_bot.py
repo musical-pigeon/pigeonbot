@@ -212,7 +212,10 @@ async def on_message(message):
                     if counter > 3 or not is_repost(message.author.id, img[0]):
                         image_url = img[0]
                         post_url = img[1]
-                        is_explicit = img[2].startswith('e') # gelbooru uses 'explicit', danbooru uses 'e'
+
+                        # danbooru's ratings are single-letter abbreviations ('explicit' -> 'e') of gelbooru's
+                        is_explicit = img[2].startswith('e') or img[2].startswith('q')
+
                         if is_explicit:
                             # stupid discord API won't allow spoilers in embeds
                             # https://support.discord.com/hc/en-us/community/posts/360043419812-Ability-to-mark-as-spoiler-images-in-rich-embeds
