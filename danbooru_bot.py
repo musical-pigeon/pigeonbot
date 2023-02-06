@@ -123,7 +123,7 @@ def is_repost(user_id, image_url) -> bool:
     return False
 
 # awake, but at what cost
-awake = False
+awake = True
 
 @client.event
 async def on_message(message):
@@ -217,7 +217,18 @@ async def on_message(message):
                             # stupid discord API won't allow spoilers in embeds
                             # https://support.discord.com/hc/en-us/community/posts/360043419812-Ability-to-mark-as-spoiler-images-in-rich-embeds
                             local_image_path = image_url.rpartition('/')[2]
-                            urllib.request.urlretrieve(image_url, local_image_path)
+                            try:
+                                urllib.request.urlretrieve(image_url, local_image_path)
+                            except BaseException as e:
+                                err = str(e)
+                                try:
+                                    err_json = json.loads(e.read().decode('utf-8'))
+                                    err += ' ' + err_json
+                                except:
+                                    pass
+                                print(err)
+                                await message.channel.send(err)
+                                raise e
                             await message.channel.send(
                                 content='<' + post_url + '>',
                                 file=discord.File(local_image_path, spoiler=True)
