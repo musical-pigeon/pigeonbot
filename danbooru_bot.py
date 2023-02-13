@@ -216,6 +216,10 @@ async def on_message(message):
                         # danbooru's ratings are single-letter abbreviations ('explicit' -> 'e') of gelbooru's
                         is_explicit = img[2].startswith('e') or img[2].startswith('q')
 
+                        if is_explicit and 'gelbooru' in image_url:
+                            # gelbooru doesn't want us retrieving their images???
+                            continue
+
                         if is_explicit:
                             # stupid discord API won't allow spoilers in embeds
                             # https://support.discord.com/hc/en-us/community/posts/360043419812-Ability-to-mark-as-spoiler-images-in-rich-embeds
@@ -223,11 +227,11 @@ async def on_message(message):
                             try:
                                 urllib.request.urlretrieve(image_url, local_image_path)
                             except BaseException as e:
-                                err = str(e)
+                                err = f'failed to retrieve image {image_url}: ' + str(e)
                                 try:
-                                    err_json = json.loads(e.read().decode('utf-8'))
-                                    err += ' ' + err_json
+                                    err += ' ' + e.read().decode('utf-8')
                                 except:
+                                    print('couldnt read it')
                                     pass
                                 print(err)
                                 await message.channel.send(err)
