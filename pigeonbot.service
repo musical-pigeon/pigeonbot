@@ -1,0 +1,14 @@
+[Unit]
+Description=a Discord bot to fetch images of your waifu
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/paul/.nix-profile/bin/nix-shell -p 'python39.withPackages(ps: with ps; [ discordpy toml ])' --run "python -u bot.py"
+
+Restart=always
+WorkingDirectory=/home/paul/pigeonbot
+User=paul
+
+[Install]
+WantedBy=multi-user.target
