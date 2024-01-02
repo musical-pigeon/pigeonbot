@@ -44,6 +44,7 @@ HEADERS={
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Referer': 'google.com',
 }
+MAX_NUM_ATTEMPTS=5
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -227,7 +228,7 @@ async def on_message(message):
                     print('gelbooru: ' + gelbooru_img_or_err)
             if img is not None:
                 if not await is_imobot_active(message):
-                    if counter > 3 or not is_repost(message.author.id, img[0]):
+                    if counter > MAX_NUM_ATTEMPTS or not is_repost(message.author.id, img[0]):
                         image_url = img[0]
                         post_url = img[1]
 
