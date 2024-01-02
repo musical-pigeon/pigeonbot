@@ -15,3 +15,9 @@ imobot_user_id="432918114582265856"
 wait_for_imobot=false
 
 repost_window=400000
+
+# encouraged but not required
+#danbooru_username=""
+#danbooru_api_key=""
+#gelbooru_user_id=""
+#gelbooru_api_key=""

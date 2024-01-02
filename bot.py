@@ -14,23 +14,36 @@ import discord
 import toml
 
 config = toml.load(open('cfg.toml'))
-assert 'tag_file' in config
-assert 'repost_file' in config
-assert 'discord_token' in config
+REQUIRED_CONFIG_KEYS=(
+    'tag_file',
+    'repost_file',
+    'discord_token',
 
-assert 'command_name__set' in config
-assert 'command_name__get' in config
-assert 'command_name__mike' in config
+    'command_name__set',
+    'command_name__get',
+    'command_name__mike',
 
-assert 'command_name__start' in config
-assert 'start_response' in config
-assert 'command_name__stop' in config
-assert 'stop_response' in config
+    'command_name__start',
+    'start_response',
+    'command_name__stop',
+    'stop_response',
 
-assert 'imobot_user_id' in config
-assert 'wait_for_imobot' in config
+    'imobot_user_id',
+    'wait_for_imobot',
 
-assert 'repost_window' in config
+    'repost_window',
+)
+
+# Encouraged, but not requred:
+#    'danbooru_username',
+#    'danbooru_api_key',
+#    'gelbooru_user_id',
+#    'gelbooru_api_key',
+
+HEADERS={
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Referer': 'google.com',
+}
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -66,7 +79,13 @@ def try_danbooru(tag, rating_tag):
     try:
         url = 'https://danbooru.donmai.us/posts.json?page=1&limit=1&tags=order:random%20'
         url += tag + '%20' + rating_tag
-        res = urllib.request.urlopen(url)
+        if 'danbooru_username' in config and 'danbooru_api_key' in config:
+            url += '&login=' + urllib.parse.quote_plus(config.get('danbooru_username').encode()) +\
+                    '&api_key=' + urllib.parse.quote_plus(config.get('danbooru_api_key').encode())
+        req = urllib.request.Request(url)
+        for k, v in HEADERS.items():
+            req.add_header(k, v)
+        res = urllib.request.urlopen(req)
         res_json = json.loads(res.read().decode('utf-8'))
         if len(res_json) > 0:
             post = res_json[0]
@@ -87,7 +106,13 @@ def try_gelbooru(tag, rating_tag):
     try:
         url = 'https://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=1&pid=0&json=1&tags=sort:random%20'
         url += tag + '%20' + rating_tag
-        res = urllib.request.urlopen(url)
+        if 'gelbooru_user_id' in config and 'gelbooru_api_key' in config:
+            url += '&user_id=' + urllib.parse.quote_plus(config.get('gelbooru_user_id').encode()) +\
+                    '&api_key=' + urllib.parse.quote_plus(config.get('gelbooru_api_key').encode())
+        req = urllib.request.Request(url)
+        for k, v in HEADERS.items():
+            req.add_header(k, v)
+        res = urllib.request.urlopen(req)
         res_json = json.loads(res.read().decode('utf-8'))
         if 'post' in res_json:
             post = res_json['post'][0]
