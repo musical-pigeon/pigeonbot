@@ -1,4 +1,5 @@
 tag_file="waifus.txt"
+repost_file="reposts.txt"
 discord_token="WHEN WILL DISCORD'S API SUPPORT IPV6 SO I CAN SAVE MONEY ON HETZNER"
 
 command_name__set=".setwaifu"

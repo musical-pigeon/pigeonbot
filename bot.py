@@ -15,6 +15,7 @@ import toml
 
 config = toml.load(open('cfg.toml'))
 assert 'tag_file' in config
+assert 'repost_file' in config
 assert 'discord_token' in config
 
 assert 'command_name__set' in config
@@ -95,7 +96,6 @@ def try_gelbooru(tag, rating_tag):
         else:
             return (False, 'no images found')
     except BaseException as e:
-        raise e
         err = str(e)
         try:
             err_json = json.loads(e.read().decode('utf-8'))
@@ -107,20 +107,13 @@ def try_gelbooru(tag, rating_tag):
 recent_results = {}
 
 def is_repost(user_id, image_url) -> bool:
-    global recent_results
-    if user_id not in recent_results:
-        recent_results[user_id] = [image_url]
-        return False
-
-    if image_url in recent_results[user_id]:
-        return True
-
-    recent_results[user_id].append(image_url)
-
-    while len(recent_results[user_id]) > int(config.get('repost_window')):
-        del recent_results[user_id][0]
-
-    return False
+    with open(config.get('repost_file'), 'r') as tag_file:
+        contents = tag_file.read()
+    result = image_url in contents.splitlines()
+    if not result:
+        contents += '\n' + image_url
+    with open(config.get('repost_file'), 'w') as tag_file:
+        tag_file.write(contents)
 
 # awake, but at what cost
 awake = True
