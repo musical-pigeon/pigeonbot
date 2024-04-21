@@ -1,10 +1,15 @@
 tag_file="waifus.txt"
+bird_file="birds.txt"
 repost_file="reposts.txt"
 discord_token="WHEN WILL DISCORD'S API SUPPORT IPV6 SO I CAN SAVE MONEY ON HETZNER"
+mw_user_agent="SEE https://www.mediawiki.org/wiki/API:Etiquette#The_User-Agent_header"
 
 command_name__set=".setwaifu"
 command_name__get="mywaifu"
 command_name__mike="mikewaifu"
+
+command_name__bird="mybird"
+command_name__birdset=".setbird"
 
 command_name__start="The time hath come."
 command_name__stop="fuck off"

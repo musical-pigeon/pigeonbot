@@ -16,12 +16,16 @@ import toml
 config = toml.load(open('cfg.toml'))
 REQUIRED_CONFIG_KEYS=(
     'tag_file',
+    'bird_file',
     'repost_file',
     'discord_token',
+    'mw_user_agent',
 
     'command_name__set',
     'command_name__get',
     'command_name__mike',
+    'command_name__bird',
+    'command_name__birdset',
 
     'command_name__start',
     'start_response',
@@ -52,17 +56,17 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-def set_tag(user_id, tag):
+def set_tag(file_key, user_id, tag):
     user_id = str(user_id)
-    with open(config.get('tag_file'), 'r') as tag_file:
+    with open(config.get(file_key), 'r') as tag_file:
         lines = list(tag_file.read().splitlines())
     lines = [line for line in lines if not line.startswith(user_id)]
     lines.append(user_id + ' ' + tag)
-    with open(config.get('tag_file'), 'w') as tag_file:
+    with open(config.get(file_key), 'w') as tag_file:
         tag_file.write('\n'.join(lines))
 
-def get_tag(user_id):
-    with open(config.get('tag_file'), 'r') as tag_file:
+def get_tag(file_key, user_id):
+    with open(config.get(file_key), 'r') as tag_file:
         for line in tag_file:
             if line.startswith(str(user_id)):
                 return line.partition(' ')[2].strip()
@@ -162,6 +166,10 @@ async def on_message(message):
             config.get('command_name__mike') + 'xxx',
             config.get('command_name__start'),
             config.get('command_name__stop'),
+            config.get('command_name__bird'),
+            config.get('command_name__bird') + 'x',
+            config.get('command_name__bird') + 'xxx',
+            config.get('command_name__birdset'),
         ]))
 
     if not awake:
@@ -185,10 +193,21 @@ async def on_message(message):
         if len(words) < 2:
             response = 'use ' + set_cmd_example
         else:
-            set_tag(message.author.id, urllib.parse.quote(message.content.partition(' ')[2]))
+            set_tag('tag_file', message.author.id, urllib.parse.quote(message.content.partition(' ')[2]))
             response = 'tag set'
         if not await is_imobot_active(message):
             await message.channel.send(response)
+
+    set_bird_example = config.get('command_name__birdset') + ' search_term'
+    if sanitized_msg.startswith(config.get('command_name__birdset')):
+        response = ''
+        words = message.content.split(' ')
+        if len(words) < 2:
+            response = 'use ' + set_bird_example
+        else:
+            set_tag('bird_file', message.author.id, message.content.partition(' ')[2])
+            response = 'bird set'
+        await message.channel.send(response)
 
     if sanitized_msg == config.get('command_name__get') or\
             sanitized_msg == config.get('command_name__get') + 'x' or\
@@ -197,7 +216,7 @@ async def on_message(message):
             sanitized_msg == config.get('command_name__mike') + 'x' or\
             sanitized_msg == config.get('command_name__mike') + 'xxx':
         if sanitized_msg.startswith(config.get('command_name__get')):
-            tag = get_tag(message.author.id)
+            tag = get_tag('tag_file', message.author.id)
             if tag is None:
                 if not await is_imobot_active(message):
                     await message.channel.send('tag not set. use ' + set_cmd_example)
@@ -271,5 +290,19 @@ async def on_message(message):
                     await message.channel.send('error. danbooru: ' + danbooru_img_or_err + ', gelbooru: ' + gelbooru_img_or_err)
                 break
             counter += 1
+    elif sanitized_msg == config.get('command_name__bird') or\
+            sanitized_msg == config.get('command_name__bird') + 'x' or\
+            sanitized_msg == config.get('command_name__bird') + 'xxx':
+        term = get_tag('bird_file', message.author.id)
+        if term is None:
+            await message.channel.send('bird not set. use ' + set_bird_example)
+        res=json.loads(urllib.request.urlopen(urllib.request.Request('https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+urllib.parse.quote(f'"{term}" -filemime:pdf')+'&gsrnamespace=6&gsrlimit=1&gsrsort=random&prop=imageinfo&iiprop=url&format=json&formatversion=2',headers={'User-Agent':config.get('mw_user_agent')})).read())['query']['pages'][0]['imageinfo'][0]
+        post_url=res['descriptionurl']
+        image_url=res['url']
+
+        e = discord.Embed()
+        e.description = post_url
+        e.set_image(url=image_url)
+        await message.channel.send(embed=e)
 
 client.run(config.get('discord_token'))
