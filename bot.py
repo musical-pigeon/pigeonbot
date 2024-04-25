@@ -50,6 +50,15 @@ HEADERS={
 }
 MAX_NUM_ATTEMPTS=5
 
+# These don't embed on Discord.
+BAD_COMMONS_FILE_MIMES = (
+    'pdf',
+    'audio/ogg',
+    'svg',
+    'image/tiff',
+    'image/vnd.djvu',
+)
+
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
@@ -296,7 +305,8 @@ async def on_message(message):
         term = get_tag('bird_file', message.author.id)
         if term is None:
             await message.channel.send('bird not set. use ' + set_bird_example)
-        res=json.loads(urllib.request.urlopen(urllib.request.Request('https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+urllib.parse.quote(f'"{term}" -filemime:pdf')+'&gsrnamespace=6&gsrlimit=1&gsrsort=random&prop=imageinfo&iiprop=url&format=json&formatversion=2',headers={'User-Agent':config.get('mw_user_agent')})).read())['query']['pages'][0]['imageinfo'][0]
+        url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+urllib.parse.quote(f'"{term}" {" ".join("-filemime:"+m for m in BAD_COMMONS_FILE_MIMES)}')+'&gsrnamespace=6&gsrlimit=1&gsrsort=random&prop=imageinfo&iiprop=url&format=json&formatversion=2'
+        res=json.loads(urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':config.get('mw_user_agent')})).read())['query']['pages'][0]['imageinfo'][0]
         post_url=res['descriptionurl']
         image_url=res['url']
 
