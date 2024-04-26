@@ -50,13 +50,19 @@ HEADERS={
 }
 MAX_NUM_ATTEMPTS=5
 
-# These don't embed on Discord.
+# These don't work on Discord.
 BAD_COMMONS_FILE_MIMES = (
     'pdf',
-    'audio/ogg',
     'svg',
     'image/tiff',
+)
+
+# These don't embed on Discord but can be uploaded as files.
+EMBED_AS_FILE = (
     'image/vnd.djvu',
+    'application/ogg',
+    'video/ogg',
+    'audio/ogg',
 )
 
 intents = discord.Intents.default()
@@ -156,6 +162,26 @@ def is_repost(user_id, image_url) -> bool:
 
 # awake, but at what cost
 awake = True
+
+async def send_file(file_url, url_for_post, message, spoiler=False):
+    local_file_path = file_url.rpartition('/')[2]
+    try:
+        urllib.request.urlretrieve(file_url, local_file_path)
+    except BaseException as e:
+        err = f'failed to retrieve image {file_url}: ' + str(e)
+        try:
+            err += ' ' + e.read().decode('utf-8')
+        except:
+            print('couldnt read it')
+            pass
+        print(err)
+        await message.channel.send(err)
+        raise e
+    await message.channel.send(
+        content='<' + url_for_post + '>',
+        file=discord.File(local_file_path, spoiler=spoiler)
+    )
+    os.remove(local_file_path)
 
 @client.event
 async def on_message(message):
@@ -258,7 +284,7 @@ async def on_message(message):
                 if not await is_imobot_active(message):
                     if counter > MAX_NUM_ATTEMPTS or not is_repost(message.author.id, img[0]):
                         image_url = img[0]
-                        post_url = img[1]
+                        url_for_post = img[1]
 
                         # danbooru's ratings are single-letter abbreviations ('explicit' -> 'e') of gelbooru's
                         is_explicit = img[2].startswith('e') or img[2].startswith('q')
@@ -268,29 +294,12 @@ async def on_message(message):
                             continue
 
                         if is_explicit:
-                            # stupid discord API won't allow spoilers in embeds
+                            # stupid discord API won't allow spoilers in embeds so we have to send it as a file
                             # https://support.discord.com/hc/en-us/community/posts/360043419812-Ability-to-mark-as-spoiler-images-in-rich-embeds
-                            local_image_path = image_url.rpartition('/')[2]
-                            try:
-                                urllib.request.urlretrieve(image_url, local_image_path)
-                            except BaseException as e:
-                                err = f'failed to retrieve image {image_url}: ' + str(e)
-                                try:
-                                    err += ' ' + e.read().decode('utf-8')
-                                except:
-                                    print('couldnt read it')
-                                    pass
-                                print(err)
-                                await message.channel.send(err)
-                                raise e
-                            await message.channel.send(
-                                content='<' + post_url + '>',
-                                file=discord.File(local_image_path, spoiler=True)
-                            )
-                            os.remove(local_image_path)
+                            await send_file(local_image_path, url_for_post, message, spoiler=True)
                         else:
                             e = discord.Embed()
-                            e.description = post_url
+                            e.description = url_for_post
                             e.set_image(url=image_url)
                             await message.channel.send(embed=e)
                         break
@@ -305,14 +314,24 @@ async def on_message(message):
         term = get_tag('bird_file', message.author.id)
         if term is None:
             await message.channel.send('bird not set. use ' + set_bird_example)
-        url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+urllib.parse.quote(f'"{term}" {" ".join("-filemime:"+m for m in BAD_COMMONS_FILE_MIMES)}')+'&gsrnamespace=6&gsrlimit=1&gsrsort=random&prop=imageinfo&iiprop=url&format=json&formatversion=2'
-        res=json.loads(urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':config.get('mw_user_agent')})).read())['query']['pages'][0]['imageinfo'][0]
-        post_url=res['descriptionurl']
-        image_url=res['url']
+        res=None
+        try:
+            url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+urllib.parse.quote(f'"{term}" {" ".join("-filemime:"+m for m in BAD_COMMONS_FILE_MIMES)}')+'&gsrnamespace=6&gsrlimit=1&gsrsort=random&prop=imageinfo&iiprop=url|mime&format=json&formatversion=2'
+            res=urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':config.get('mw_user_agent')})).read()
+            imageinfo=json.loads(res)['query']['pages'][0]['imageinfo'][0]
+            url_for_post=imageinfo['descriptionurl']
+            file_url=imageinfo['url']
 
-        e = discord.Embed()
-        e.description = post_url
-        e.set_image(url=image_url)
-        await message.channel.send(embed=e)
+            if imageinfo['mime'] in EMBED_AS_FILE:
+                await send_file(file_url, url_for_post, message)
+            else:
+                e = discord.Embed()
+                e.description = url_for_post
+                e.set_image(url=file_url)
+                await message.channel.send(embed=e)
+        except BaseException as e:
+            print(e)
+            print(res)
+            await message.channel.send('error. ' + str(e))
 
 client.run(config.get('discord_token'))
