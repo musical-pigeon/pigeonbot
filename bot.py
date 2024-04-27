@@ -55,11 +55,11 @@ BAD_COMMONS_FILE_MIMES = (
     'pdf',
     'svg',
     'image/tiff',
+    'image/vnd.djvu',
 )
 
 # These don't embed on Discord but can be uploaded as files.
 EMBED_AS_FILE = (
-    'image/vnd.djvu',
     'application/ogg',
     'video/ogg',
     'audio/ogg',
