@@ -19,7 +19,7 @@ REQUIRED_CONFIG_KEYS=(
     'bird_file',
     'repost_file',
     'discord_token',
-    'mw_user_agent',
+    'user_agent',
 
     'command_name__set',
     'command_name__get',
@@ -45,7 +45,7 @@ REQUIRED_CONFIG_KEYS=(
 #    'gelbooru_api_key',
 
 HEADERS={
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'User-Agent': config.get('user_agent'),
     'Referer': 'google.com',
 }
 MAX_NUM_ATTEMPTS=5
@@ -316,8 +316,8 @@ async def on_message(message):
             await message.channel.send('bird not set. use ' + set_bird_example)
         res=None
         try:
-            url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+urllib.parse.quote(f'"{term}" {" ".join("-filemime:"+m for m in BAD_COMMONS_FILE_MIMES)}')+'&gsrnamespace=6&gsrlimit=1&gsrsort=random&prop=imageinfo&iiprop=url|mime&format=json&formatversion=2'
-            res=urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':config.get('mw_user_agent')})).read()
+            url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+urllib.parse.quote(f'"{term}" {" ".join("-filemime:"+m for m in BAD_COMMONS_FILE_MIMES)} -"bird skin specimen" -"preserved specimen"')+'&gsrnamespace=6&gsrlimit=1&gsrsort=random&prop=imageinfo&iiprop=url|mime&format=json&formatversion=2'
+            res=urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':config.get('user_agent')})).read()
             imageinfo=json.loads(res)['query']['pages'][0]['imageinfo'][0]
             url_for_post=imageinfo['descriptionurl']
             file_url=imageinfo['url']
