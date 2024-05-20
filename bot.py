@@ -38,6 +38,10 @@ REQUIRED_CONFIG_KEYS=(
     'repost_window',
 )
 
+for key in REQUIRED_CONFIG_KEYS:
+    if not key in config:
+        print(f'[warning] key {key} not in config')
+
 # Encouraged, but not requred:
 #    'danbooru_username',
 #    'danbooru_api_key',
@@ -296,7 +300,7 @@ async def on_message(message):
                         if is_explicit:
                             # stupid discord API won't allow spoilers in embeds so we have to send it as a file
                             # https://support.discord.com/hc/en-us/community/posts/360043419812-Ability-to-mark-as-spoiler-images-in-rich-embeds
-                            await send_file(local_image_path, url_for_post, message, spoiler=True)
+                            await send_file(image_url, url_for_post, message, spoiler=True)
                         else:
                             e = discord.Embed()
                             e.description = url_for_post
